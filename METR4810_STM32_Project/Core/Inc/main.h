@@ -65,8 +65,10 @@ void Error_Handler(void);
 #define EN1_GPIO_Port GPIOA
 #define LS1_Pin GPIO_PIN_3
 #define LS1_GPIO_Port GPIOA
+#define LS1_EXTI_IRQn EXTI3_IRQn
 #define LS2_Pin GPIO_PIN_4
 #define LS2_GPIO_Port GPIOA
+#define LS2_EXTI_IRQn EXTI4_IRQn
 
 /* USER CODE BEGIN Private defines */
 

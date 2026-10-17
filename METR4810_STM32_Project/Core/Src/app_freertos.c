@@ -19,15 +19,12 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "FreeRTOS.h"
-#include "cmsis_os2.h"
 #include "task.h"
 #include "main.h"
 #include "cmsis_os.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
-#include "tim.h"
 
 /* USER CODE END Includes */
 
@@ -52,28 +49,28 @@ typedef StaticSemaphore_t osStaticSemaphoreDef_t;
 /* USER CODE BEGIN Variables */
 
 /* USER CODE END Variables */
-/* Definitions for goForwardTask */
-osThreadId_t goForwardTaskHandle;
-uint32_t goForwardTaskBuffer[ 128 ];
-osStaticThreadDef_t goForwardTaskControlBlock;
-const osThreadAttr_t goForwardTask_attributes = {
-  .name = "goForwardTask",
-  .stack_mem = &goForwardTaskBuffer[0],
-  .stack_size = sizeof(goForwardTaskBuffer),
-  .cb_mem = &goForwardTaskControlBlock,
-  .cb_size = sizeof(goForwardTaskControlBlock),
+/* Definitions for defaultTask */
+osThreadId_t defaultTaskHandle;
+uint32_t defaultTaskBuffer[ 128 ];
+osStaticThreadDef_t defaultTaskControlBlock;
+const osThreadAttr_t defaultTask_attributes = {
+  .name = "defaultTask",
+  .stack_mem = &defaultTaskBuffer[0],
+  .stack_size = sizeof(defaultTaskBuffer),
+  .cb_mem = &defaultTaskControlBlock,
+  .cb_size = sizeof(defaultTaskControlBlock),
   .priority = (osPriority_t) osPriorityNormal,
 };
-/* Definitions for goBackwardTask */
-osThreadId_t goBackwardTaskHandle;
-uint32_t goBackwardTaskBuffer[ 128 ];
-osStaticThreadDef_t goBackwardTaskControlBlock;
-const osThreadAttr_t goBackwardTask_attributes = {
-  .name = "goBackwardTask",
-  .stack_mem = &goBackwardTaskBuffer[0],
-  .stack_size = sizeof(goBackwardTaskBuffer),
-  .cb_mem = &goBackwardTaskControlBlock,
-  .cb_size = sizeof(goBackwardTaskControlBlock),
+/* Definitions for switchDirection */
+osThreadId_t switchDirectionHandle;
+uint32_t switchDirectionBuffer[ 128 ];
+osStaticThreadDef_t switchDirectionControlBlock;
+const osThreadAttr_t switchDirection_attributes = {
+  .name = "switchDirection",
+  .stack_mem = &switchDirectionBuffer[0],
+  .stack_size = sizeof(switchDirectionBuffer),
+  .cb_mem = &switchDirectionControlBlock,
+  .cb_size = sizeof(switchDirectionControlBlock),
   .priority = (osPriority_t) osPriorityNormal,
 };
 /* Definitions for goForwardSemaphore */
@@ -98,8 +95,8 @@ const osSemaphoreAttr_t goBackwardSemaphore_attributes = {
 
 /* USER CODE END FunctionPrototypes */
 
-void StartGoForwardTask(void *argument);
-void StartGoBackwardTask(void *argument);
+void StartDefaultTask(void *argument);
+void StartSwitchDirectionTask(void *argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
@@ -137,11 +134,11 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
-  /* creation of goForwardTask */
-  goForwardTaskHandle = osThreadNew(StartGoForwardTask, NULL, &goForwardTask_attributes);
+  /* creation of defaultTask */
+  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
-  /* creation of goBackwardTask */
-  goBackwardTaskHandle = osThreadNew(StartGoBackwardTask, NULL, &goBackwardTask_attributes);
+  /* creation of switchDirection */
+  switchDirectionHandle = osThreadNew(StartSwitchDirectionTask, NULL, &switchDirection_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -153,47 +150,40 @@ void MX_FREERTOS_Init(void) {
 
 }
 
-/* USER CODE BEGIN Header_StartGoForwardTask */
+/* USER CODE BEGIN Header_StartDefaultTask */
 /**
-  * @brief  Function implementing the goForwardTask thread.
+  * @brief  Function implementing the defaultTask thread.
   * @param  argument: Not used
   * @retval None
   */
-/* USER CODE END Header_StartGoForwardTask */
-void StartGoForwardTask(void *argument)
+/* USER CODE END Header_StartDefaultTask */
+void StartDefaultTask(void *argument)
 {
-  /* USER CODE BEGIN StartGoForwardTask */
-
+  /* USER CODE BEGIN StartDefaultTask */
   /* Infinite loop */
   for(;;)
   {
-    //xSemaphoreTake(goForwardSemaphoreHandle, portMAX_DELAY);
-
-    //HAL_TIM_PWM_Stop(&htim2, TIM_CHANNEL_1);
-    //HAL_GPIO_WritePin(EN1_GPIO_Port, EN1_Pin, GPIO_PIN_SET);
-
     osDelay(1);
   }
-  /* USER CODE END StartGoForwardTask */
+  /* USER CODE END StartDefaultTask */
 }
 
-/* USER CODE BEGIN Header_StartGoBackwardTask */
+/* USER CODE BEGIN Header_StartSwitchDirectionTask */
 /**
-* @brief Function implementing the goBackwardTask thread.
+* @brief Function implementing the switchDirection thread.
 * @param argument: Not used
 * @retval None
 */
-/* USER CODE END Header_StartGoBackwardTask */
-void StartGoBackwardTask(void *argument)
+/* USER CODE END Header_StartSwitchDirectionTask */
+void StartSwitchDirectionTask(void *argument)
 {
-  /* USER CODE BEGIN StartGoBackwardTask */
+  /* USER CODE BEGIN StartSwitchDirectionTask */
   /* Infinite loop */
   for(;;)
   {
-    //xSemaphoreTake(goBackwardSemaphoreHandle, portMAX_DELAY);
     osDelay(1);
   }
-  /* USER CODE END StartGoBackwardTask */
+  /* USER CODE END StartSwitchDirectionTask */
 }
 
 /* Private application code --------------------------------------------------*/

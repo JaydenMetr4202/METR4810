@@ -35,9 +35,6 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 
-#define NOT_TOGGLED 0
-#define TOGGLED 1
-
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -48,12 +45,6 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
-extern osSemaphoreId goForwardSemaphoreHandle;
-extern osSemaphoreId goBackwardSemaphoreHandle;
-
- uint16_t LS1_toggled = 0;
- uint16_t LS2_toggled = 1;
 
 /* USER CODE END PV */
 
@@ -100,14 +91,6 @@ int main(void)
   MX_GPIO_Init();
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
-
-  HAL_GPIO_WritePin(EN1_GPIO_Port, EN1_Pin, GPIO_PIN_RESET);
-  HAL_GPIO_WritePin(DIR1_GPIO_Port, DIR1_Pin, GPIO_PIN_SET);
-
-  __HAL_TIM_SET_AUTORELOAD(&htim2, 1999);
-  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1, 1000);
-
-  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
 
   /* USER CODE END 2 */
 
@@ -172,28 +155,6 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
-
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
-{
-
-  BaseType_t higherTaskWoken = pdFALSE;
-
-  if(GPIO_Pin == LS1_Pin && LS1_toggled == NOT_TOGGLED) {
-    LS1_toggled = TOGGLED;
-    LS2_toggled = NOT_TOGGLED;
-
-    //xSemaphoreGiveFromISR(goForwardSemaphoreHandle, &higherTaskWoken);
-    //portYIELD_FROM_ISR(higherTaskWoken);
-  }
-
-  if(GPIO_Pin == LS2_Pin && LS2_toggled == NOT_TOGGLED) {
-    LS2_toggled = TOGGLED;
-    LS1_toggled = NOT_TOGGLED;
-
-    //xSemaphoreGiveFromISR(goBackwardSemaphoreHandle, &higherTaskWoken);
-    //portYIELD_FROM_ISR(higherTaskWoken);
-  }
-}
 
 /* USER CODE END 4 */
 
