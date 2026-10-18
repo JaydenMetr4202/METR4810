@@ -26,6 +26,8 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
+#include "semphr.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -136,14 +138,13 @@ void StartDefaultTask(void *argument)
 {
   /* USER CODE BEGIN StartDefaultTask */
 
+  osDelay(100);
+
   HAL_GPIO_WritePin(DIR1_GPIO_Port, DIR1_Pin, GPIO_PIN_SET);
-
-  osDelay(10);
-
   HAL_GPIO_WritePin(EN1_GPIO_Port, EN1_Pin, GPIO_PIN_RESET);
 
-  __HAL_TIM_SET_AUTORELOAD(&htim2, 19999);
-  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1, 10000);
+  __HAL_TIM_SET_AUTORELOAD(&htim2, 499);
+  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1, 250);
 
   HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
 
@@ -158,7 +159,7 @@ void StartDefaultTask(void *argument)
     HAL_GPIO_TogglePin(DIR1_GPIO_Port, DIR1_Pin);
 
     // Give the driver time to register the new direction
-    osDelay(10);
+    osDelay(1000);
 
     HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
   }

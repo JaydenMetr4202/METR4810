@@ -25,6 +25,8 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
+#include "semphr.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -49,10 +51,10 @@
 
 /* USER CODE BEGIN PV */
 
-extern osSemaphoreId changeDirectionSemaphoreHandle;
+extern osSemaphoreId_t changeDirectionSemaphoreHandle;
 
 uint16_t LS1_toggled = NOT_TOGGLED;
-uint16_t LS2_toggled = TOGGLED;
+uint16_t LS2_toggled = NOT_TOGGLED;
 
 /* USER CODE END PV */
 
@@ -175,7 +177,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 
     xSemaphoreGiveFromISR(changeDirectionSemaphoreHandle, &higherTaskWoken);
     portYIELD_FROM_ISR(higherTaskWoken);
-    
+
   } else if (GPIO_Pin == LS2_Pin && LS2_toggled == NOT_TOGGLED) {
     LS2_toggled = TOGGLED;
     LS1_toggled = NOT_TOGGLED;
