@@ -35,6 +35,9 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 
+#define NOT_TOGGLED 0
+#define TOGGLED 1
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -45,6 +48,11 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+
+extern osSemaphoreId changeDirectionSemaphoreHandle;
+
+uint16_t LS1_toggled = NOT_TOGGLED;
+uint16_t LS2_toggled = TOGGLED;
 
 /* USER CODE END PV */
 
@@ -155,6 +163,27 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+
+  BaseType_t higherTaskWoken = pdFALSE;
+
+  if (GPIO_Pin == LS1_Pin && LS1_toggled == NOT_TOGGLED) {
+    LS1_toggled = TOGGLED;
+    LS2_toggled = NOT_TOGGLED;
+
+    xSemaphoreGiveFromISR(changeDirectionSemaphoreHandle, &higherTaskWoken);
+    portYIELD_FROM_ISR(higherTaskWoken);
+    
+  } else if (GPIO_Pin == LS2_Pin && LS2_toggled == NOT_TOGGLED) {
+    LS2_toggled = TOGGLED;
+    LS1_toggled = NOT_TOGGLED;
+
+    xSemaphoreGiveFromISR(changeDirectionSemaphoreHandle, &higherTaskWoken);
+    portYIELD_FROM_ISR(higherTaskWoken);
+  }
+}
 
 /* USER CODE END 4 */
 

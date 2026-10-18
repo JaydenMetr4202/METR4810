@@ -48,6 +48,8 @@ typedef StaticSemaphore_t osStaticSemaphoreDef_t;
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
 
+extern TIM_HandleTypeDef htim2;
+
 /* USER CODE END Variables */
 /* Definitions for defaultTask */
 osThreadId_t defaultTaskHandle;
@@ -61,33 +63,13 @@ const osThreadAttr_t defaultTask_attributes = {
   .cb_size = sizeof(defaultTaskControlBlock),
   .priority = (osPriority_t) osPriorityNormal,
 };
-/* Definitions for switchDirection */
-osThreadId_t switchDirectionHandle;
-uint32_t switchDirectionBuffer[ 128 ];
-osStaticThreadDef_t switchDirectionControlBlock;
-const osThreadAttr_t switchDirection_attributes = {
-  .name = "switchDirection",
-  .stack_mem = &switchDirectionBuffer[0],
-  .stack_size = sizeof(switchDirectionBuffer),
-  .cb_mem = &switchDirectionControlBlock,
-  .cb_size = sizeof(switchDirectionControlBlock),
-  .priority = (osPriority_t) osPriorityNormal,
-};
-/* Definitions for goForwardSemaphore */
-osSemaphoreId_t goForwardSemaphoreHandle;
-osStaticSemaphoreDef_t goForwardSemaphoreControlBlock;
-const osSemaphoreAttr_t goForwardSemaphore_attributes = {
-  .name = "goForwardSemaphore",
-  .cb_mem = &goForwardSemaphoreControlBlock,
-  .cb_size = sizeof(goForwardSemaphoreControlBlock),
-};
-/* Definitions for goBackwardSemaphore */
-osSemaphoreId_t goBackwardSemaphoreHandle;
-osStaticSemaphoreDef_t goBackwardSemaphoreControlBlock;
-const osSemaphoreAttr_t goBackwardSemaphore_attributes = {
-  .name = "goBackwardSemaphore",
-  .cb_mem = &goBackwardSemaphoreControlBlock,
-  .cb_size = sizeof(goBackwardSemaphoreControlBlock),
+/* Definitions for changeDirectionSemaphore */
+osSemaphoreId_t changeDirectionSemaphoreHandle;
+osStaticSemaphoreDef_t changeDirectionSemaphoreControlBlock;
+const osSemaphoreAttr_t changeDirectionSemaphore_attributes = {
+  .name = "changeDirectionSemaphore",
+  .cb_mem = &changeDirectionSemaphoreControlBlock,
+  .cb_size = sizeof(changeDirectionSemaphoreControlBlock),
 };
 
 /* Private function prototypes -----------------------------------------------*/
@@ -96,7 +78,6 @@ const osSemaphoreAttr_t goBackwardSemaphore_attributes = {
 /* USER CODE END FunctionPrototypes */
 
 void StartDefaultTask(void *argument);
-void StartSwitchDirectionTask(void *argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
@@ -115,11 +96,8 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE END RTOS_MUTEX */
 
   /* Create the semaphores(s) */
-  /* creation of goForwardSemaphore */
-  goForwardSemaphoreHandle = osSemaphoreNew(1, 1, &goForwardSemaphore_attributes);
-
-  /* creation of goBackwardSemaphore */
-  goBackwardSemaphoreHandle = osSemaphoreNew(1, 1, &goBackwardSemaphore_attributes);
+  /* creation of changeDirectionSemaphore */
+  changeDirectionSemaphoreHandle = osSemaphoreNew(1, 1, &changeDirectionSemaphore_attributes);
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
   /* add semaphores, ... */
@@ -136,9 +114,6 @@ void MX_FREERTOS_Init(void) {
   /* Create the thread(s) */
   /* creation of defaultTask */
   defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
-
-  /* creation of switchDirection */
-  switchDirectionHandle = osThreadNew(StartSwitchDirectionTask, NULL, &switchDirection_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -160,30 +135,34 @@ void MX_FREERTOS_Init(void) {
 void StartDefaultTask(void *argument)
 {
   /* USER CODE BEGIN StartDefaultTask */
+
+  HAL_GPIO_WritePin(DIR1_GPIO_Port, DIR1_Pin, GPIO_PIN_SET);
+
+  osDelay(10);
+
+  HAL_GPIO_WritePin(EN1_GPIO_Port, EN1_Pin, GPIO_PIN_RESET);
+
+  __HAL_TIM_SET_AUTORELOAD(&htim2, 19999);
+  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1, 10000);
+
+  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
+
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+    xSemaphoreTake(changeDirectionSemaphoreHandle, portMAX_DELAY);
+
+    HAL_TIM_PWM_Stop(&htim2, TIM_CHANNEL_1);
+
+    // Change direction
+    HAL_GPIO_TogglePin(DIR1_GPIO_Port, DIR1_Pin);
+
+    // Give the driver time to register the new direction
+    osDelay(10);
+
+    HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
   }
   /* USER CODE END StartDefaultTask */
-}
-
-/* USER CODE BEGIN Header_StartSwitchDirectionTask */
-/**
-* @brief Function implementing the switchDirection thread.
-* @param argument: Not used
-* @retval None
-*/
-/* USER CODE END Header_StartSwitchDirectionTask */
-void StartSwitchDirectionTask(void *argument)
-{
-  /* USER CODE BEGIN StartSwitchDirectionTask */
-  /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
-  }
-  /* USER CODE END StartSwitchDirectionTask */
 }
 
 /* Private application code --------------------------------------------------*/

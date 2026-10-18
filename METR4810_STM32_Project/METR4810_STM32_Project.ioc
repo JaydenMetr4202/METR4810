@@ -2,10 +2,10 @@
 CAD.formats=
 CAD.pinconfig=
 CAD.provider=
-FREERTOS.BinarySemaphores01=goForwardSemaphore,Static,goForwardSemaphoreControlBlock,Available;goBackwardSemaphore,Static,goBackwardSemaphoreControlBlock,Available
+FREERTOS.BinarySemaphores01=changeDirectionSemaphore,Static,changeDirectionSemaphoreControlBlock,Available
 FREERTOS.FootprintOK=true
 FREERTOS.IPParameters=Tasks01,FootprintOK,BinarySemaphores01
-FREERTOS.Tasks01=defaultTask,24,128,StartDefaultTask,Default,NULL,Static,defaultTaskBuffer,defaultTaskControlBlock;switchDirection,24,128,StartSwitchDirectionTask,Default,NULL,Static,switchDirectionBuffer,switchDirectionControlBlock
+FREERTOS.Tasks01=defaultTask,24,128,StartDefaultTask,Default,NULL,Static,defaultTaskBuffer,defaultTaskControlBlock
 File.Version=6
 GPIO.groupedBy=Group By Peripherals
 KeepUserPlacement=false
