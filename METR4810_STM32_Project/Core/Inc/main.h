@@ -69,6 +69,8 @@ void Error_Handler(void);
 #define LS2_Pin GPIO_PIN_4
 #define LS2_GPIO_Port GPIOA
 #define LS2_EXTI_IRQn EXTI4_IRQn
+#define DRILL_Pin GPIO_PIN_11
+#define DRILL_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 

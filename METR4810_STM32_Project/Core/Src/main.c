@@ -26,6 +26,7 @@
 /* USER CODE BEGIN Includes */
 
 #include "semphr.h"
+#include <stdint.h>
 
 /* USER CODE END Includes */
 
@@ -115,6 +116,7 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+
   while (1)
   {
     /* USER CODE END WHILE */
