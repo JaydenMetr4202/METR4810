@@ -33,13 +33,20 @@
 
 /* Private typedef -----------------------------------------------------------*/
 typedef StaticTask_t osStaticThreadDef_t;
-typedef StaticSemaphore_t osStaticSemaphoreDef_t;
 /* USER CODE BEGIN PTD */
 
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+
+#define START_UP_TIME 100 // 0.1 seconds
+
+#define DRILL_TIME 5000   // 5 seconds
+
+#define CHANGE_DIRECTION_TIME 500   // 0.5 seconds
+
+#define LS2 (1 << 1)
 
 #define MIN_FREQUENCY 100
 #define MAX_FREQUENCY 500
@@ -74,20 +81,12 @@ const osThreadAttr_t defaultTask_attributes = {
   .cb_size = sizeof(defaultTaskControlBlock),
   .priority = (osPriority_t) osPriorityNormal,
 };
-/* Definitions for changeDirectionSemaphore */
-osSemaphoreId_t changeDirectionSemaphoreHandle;
-osStaticSemaphoreDef_t changeDirectionSemaphoreControlBlock;
-const osSemaphoreAttr_t changeDirectionSemaphore_attributes = {
-  .name = "changeDirectionSemaphore",
-  .cb_mem = &changeDirectionSemaphoreControlBlock,
-  .cb_size = sizeof(changeDirectionSemaphoreControlBlock),
-};
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
 
-void ramp_up_motor(void);
-void ramp_down_motor(void);
+void start_motor(void);
+void stop_motor(void);
 
 /* USER CODE END FunctionPrototypes */
 
@@ -108,10 +107,6 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN RTOS_MUTEX */
   /* add mutexes, ... */
   /* USER CODE END RTOS_MUTEX */
-
-  /* Create the semaphores(s) */
-  /* creation of changeDirectionSemaphore */
-  changeDirectionSemaphoreHandle = osSemaphoreNew(1, 0, &changeDirectionSemaphore_attributes);
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
   /* add semaphores, ... */
@@ -150,40 +145,38 @@ void StartDefaultTask(void *argument)
 {
   /* USER CODE BEGIN StartDefaultTask */
 
-  osDelay(100);
+  uint32_t msg = 0;
 
+  osDelay(START_UP_TIME);
+
+  // Set forward direction and enable stepper motor
   HAL_GPIO_WritePin(DIR1_GPIO_Port, DIR1_Pin, GPIO_PIN_SET);
   HAL_GPIO_WritePin(EN1_GPIO_Port, EN1_Pin, GPIO_PIN_RESET);
 
-  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
-
+  // Start drill
   HAL_GPIO_WritePin(DRILL_GPIO_Port, DRILL_Pin, GPIO_PIN_SET);
 
-  ramp_up_motor();
+  start_motor();
 
   /* Infinite loop */
   for(;;)
   {
-    xSemaphoreTake(changeDirectionSemaphoreHandle, portMAX_DELAY);
+    // Wait for limit switches or 5 seconds to switch directions
+    xTaskNotifyWait(0, 0xFFFFFFFF, &msg, DRILL_TIME);
 
-    ramp_down_motor();
-
-    HAL_TIM_PWM_Stop(&htim2, TIM_CHANNEL_1);
-
-    if (direction_changes < MAX_DIRECTION_CHANGES) {
-      direction_changes += 1;
-
+    stop_motor();
+    
+    if (msg & LS2) {
+      // Stop the motor, everything is done
+      HAL_GPIO_WritePin(DRILL_GPIO_Port, DRILL_Pin, GPIO_PIN_RESET);
+    } else {
       // Change direction
       HAL_GPIO_TogglePin(DIR1_GPIO_Port, DIR1_Pin);
 
       // Give the driver time to register the new direction
-      osDelay(1000);
+      osDelay(CHANGE_DIRECTION_TIME);
 
-      HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
-
-      ramp_up_motor();
-    } else {
-      HAL_GPIO_WritePin(DRILL_GPIO_Port, DRILL_Pin, GPIO_PIN_RESET);
+      start_motor();
     }
   }
   /* USER CODE END StartDefaultTask */
@@ -192,7 +185,9 @@ void StartDefaultTask(void *argument)
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */
 
-void ramp_up_motor(void) {
+void start_motor(void) {
+  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
+
   uint32_t frequency = MIN_FREQUENCY;
 
   while (frequency <= MAX_FREQUENCY) {
@@ -207,7 +202,7 @@ void ramp_up_motor(void) {
   }
 }
 
-void ramp_down_motor(void) {
+void stop_motor(void) {
   uint32_t frequency = MAX_FREQUENCY;
 
   while (frequency >= MIN_FREQUENCY) {
@@ -220,6 +215,8 @@ void ramp_down_motor(void) {
 
     frequency -= FREQUENCY_STEP;
   }
+
+  HAL_TIM_PWM_Stop(&htim2, TIM_CHANNEL_1);
 }
 
 /* USER CODE END Application */

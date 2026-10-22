@@ -41,6 +41,9 @@
 #define NOT_TOGGLED 0
 #define TOGGLED 1
 
+#define LS1 (1 << 0)
+#define LS2 (1 << 1)
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -52,7 +55,7 @@
 
 /* USER CODE BEGIN PV */
 
-extern osSemaphoreId_t changeDirectionSemaphoreHandle;
+extern osThreadId_t defaultTaskHandle;
 
 uint16_t LS1_toggled = NOT_TOGGLED;
 uint16_t LS2_toggled = NOT_TOGGLED;
@@ -177,14 +180,16 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
     LS1_toggled = TOGGLED;
     LS2_toggled = NOT_TOGGLED;
 
-    xSemaphoreGiveFromISR(changeDirectionSemaphoreHandle, &higherTaskWoken);
+    uint32_t msg = LS1;
+    xTaskNotifyFromISR(defaultTaskHandle, msg, eSetValueWithOverwrite, &higherTaskWoken);
     portYIELD_FROM_ISR(higherTaskWoken);
 
   } else if (GPIO_Pin == LS2_Pin && LS2_toggled == NOT_TOGGLED) {
     LS2_toggled = TOGGLED;
     LS1_toggled = NOT_TOGGLED;
 
-    xSemaphoreGiveFromISR(changeDirectionSemaphoreHandle, &higherTaskWoken);
+    uint32_t msg = LS2;
+    xTaskNotifyFromISR(defaultTaskHandle, msg, eSetValueWithOverwrite, &higherTaskWoken);
     portYIELD_FROM_ISR(higherTaskWoken);
   }
 }
