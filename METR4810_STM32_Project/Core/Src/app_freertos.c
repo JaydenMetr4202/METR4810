@@ -26,7 +26,6 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
-#include "semphr.h"
 #include <stdint.h>
 
 /* USER CODE END Includes */
@@ -65,6 +64,7 @@ typedef StaticTask_t osStaticThreadDef_t;
 /* USER CODE BEGIN Variables */
 
 extern TIM_HandleTypeDef htim2;
+extern TIM_HandleTypeDef htim4;
 
 uint16_t direction_changes = 0;
 
@@ -85,6 +85,8 @@ const osThreadAttr_t defaultTask_attributes = {
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
 
+void turn_right(void);
+void turn_left(void);
 void start_motor(void);
 void stop_motor(void);
 
@@ -149,6 +151,10 @@ void StartDefaultTask(void *argument)
 
   osDelay(START_UP_TIME);
 
+  // Turn robot
+  HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_1);
+  turn_right();
+
   // Set forward direction and enable stepper motor
   HAL_GPIO_WritePin(DIR1_GPIO_Port, DIR1_Pin, GPIO_PIN_SET);
   HAL_GPIO_WritePin(EN1_GPIO_Port, EN1_Pin, GPIO_PIN_RESET);
@@ -162,7 +168,7 @@ void StartDefaultTask(void *argument)
   for(;;)
   {
     // Wait for limit switches or 5 seconds to switch directions
-    xTaskNotifyWait(0, 0xFFFFFFFF, &msg, DRILL_TIME);
+    xTaskNotifyWait(0, 0xFFFFFFFF, &msg, portMAX_DELAY);
 
     stop_motor();
     
@@ -184,6 +190,28 @@ void StartDefaultTask(void *argument)
 
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */
+
+void turn_right(void) {
+  uint16_t start = 1500;
+  uint16_t target = 1233;
+
+  for (uint16_t pulse = start; pulse > target; pulse--) {
+    __HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_1, pulse);
+    
+    HAL_Delay(7);
+  }
+}
+
+void turn_left(void) {
+  uint16_t start = 1233;
+  uint16_t target = 1500;
+
+  for (uint16_t pulse = start; pulse < target; pulse++) {
+    __HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_1, pulse);
+
+    HAL_Delay(7);
+  }
+}
 
 void start_motor(void) {
   HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
